@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            font-family: monospace;
+            overflow: hidden;
+        }
+        #ascii-container {
+            color: white;
+            white-space: pre;
+            font-size: 16px;
+            line-height: 0.9;
+            transform-origin: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="ascii-container"></div>
+    <script>
+        const container = document.getElementById('ascii-container');
+        
+        // Text to display
+        const text = "ALEX ROSEN";
+        
+        // ASCII characters for different wave intensities
+        const chars = ' .~≈≋∽≈~.'.split('');
+        
+        // Dynamically calculate dimensions based on window size
+        let width, height;
+        
+        function updateDimensions() {
+            // Calculate dimensions based on character size and window size
+            const charWidth = 9;  // Approximate width of a character in pixels
+            const charHeight = 14.4;  // Approximate height of a character in pixels
+            width = Math.floor(window.innerWidth / charWidth);
+            height = Math.floor(window.innerHeight / charHeight);
+        }
+        
+        // Initial calculation
+        updateDimensions();
+        
+        // Update dimensions when window is resized
+        window.addEventListener('resize', () => {
+            updateDimensions();
+        });
+        
+        // Define the letters as patterns (1 represents letter pixels, 0 represents spaces)
+        const letters = {
+            'A': [
+                "  █  ",
+                " █ █ ",
+                "█   █",
+                "█████",
+                "█   █"
+            ],
+            'L': [
+                "█    ",
+                "█    ",
+                "█    ",
+                "█    ",
+                "█████"
+            ],
+            'E': [
+                "█████",
+                "█    ",
+                "████ ",
+                "█    ",
+                "█████"
+            ],
+            'X': [
+                "█   █",
+                " █ █ ",
+                "  █  ",
+                " █ █ ",
+                "█   █"
+            ],
+            'R': [
+                "████ ",
+                "█   █",
+                "████ ",
+                "█  █ ",
+                "█   █"
+            ],
+            'O': [
+                " ███ ",
+                "█   █",
+                "█   █",
+                "█   █",
+                " ███ "
+            ],
+            'S': [
+                "█████",
+                "█    ",
+                "█████",
+                "    █",
+                "█████"
+            ],
+            'N': [
+                "█   █",
+                "██  █",
+                "█ █ █",
+                "█  ██",
+                "█   █"
+            ],
+            ' ': [
+                "     ",
+                "     ",
+                "     ",
+                "     ",
+                "     "
+            ]
+        };
+
+        // Animation parameters
+        const fps = 30;
+        let frame = 0;
+        
+        function getLetterPixel(letter, x, y) {
+            if (!letters[letter]) return 0;
+            return letters[letter][y]?.[x] === '█' ? 1 : 0;
+        }
+
+        function createWave() {
+            let result = '';
+            const letterHeight = 5;
+            const letterWidth = 5;
+            const spacing = 1;
+            // Center the text
+            const textStartX = Math.floor(width/2 - (text.length * (letterWidth + spacing))/2);
+            const textStartY = Math.floor(height/2 - letterHeight/2);
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // Calculate base wave
+                    const time = frame * 0.1;
+                    const xOffset = x * 0.2;
+                    const baseWave = Math.sin(xOffset - time) * 2;
+                    
+                    // Check if we're in the text region
+                    const textY = y - textStartY;
+                    const letterY = Math.floor(textY / 1);
+                    
+                    if (textY >= 0 && textY < letterHeight) {
+                        let isLetterPixel = false;
+                        let letterIndex = 0;
+                        let totalWidth = 0;
+                        
+                        // Find which letter we're in
+                        for (let i = 0; i < text.length; i++) {
+                            const currentWidth = letterWidth + spacing;
+                            const letterX = x - textStartX - (i * currentWidth);
+                            
+                            if (letterX >= 0 && letterX < letterWidth) {
+                                isLetterPixel = getLetterPixel(text[i], letterX, textY);
+                                break;
+                            }
+                        }
+                        
+                        if (isLetterPixel) {
+                            // Add wave effect to letter pixels
+                            const waveOffset = Math.sin(xOffset - time) * 1;
+                            const distortion = Math.sin((x + frame) * 0.1) * 0.5;
+                            result += chars[Math.floor(Math.abs(waveOffset + distortion) * 2)];
+                        } else {
+                            // Background wave
+                            const distanceFromWave = Math.abs(baseWave);
+                            const charIndex = Math.min(Math.floor(distanceFromWave * 2), chars.length - 1);
+                            result += chars[charIndex];
+                        }
+                    } else {
+                        // Regular wave pattern outside text region
+                        const distanceFromWave = Math.abs(baseWave);
+                        const charIndex = Math.min(Math.floor(distanceFromWave * 2), chars.length - 1);
+                        result += chars[charIndex];
+                    }
+                }
+                result += '\n';
+            }
+            
+            return result;
+        }
+        
+        function animate() {
+            container.textContent = createWave();
+            frame++;
+            setTimeout(() => requestAnimationFrame(animate), 1000/fps);
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
